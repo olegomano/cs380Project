@@ -1,6 +1,5 @@
 import java.nio.ByteBuffer;
 
-
 public class Packet {
 	public static final int PACKET_SIZE = 2048;
 	
@@ -9,6 +8,10 @@ public class Packet {
 	public static final int TYPE_DATA_TRANSFER = 3;
 	public static final int TYPE_DATA_ACKNOWLEDGE =4;
 	public static final int TYPE_FILE_INFO = 5;
+	public static final int TYPE_ERROR = 6;
+	
+	public static final String ERROR_FILE_NOT_FOUND = "FILE_NOT_FOUND";
+	public static final String ERROR_REACHED_MAX_RETRY = "REACHED_MAX_RETRY";
 	
 	private static final int TYPE_START = 0;
 	private static final int TYPE_END = 4;
@@ -39,7 +42,7 @@ public class Packet {
 	
 	public byte[] getDataSection(){
 		byte[] b = new byte[DATA_END - DATA_START];
-		System.arraycopy(data, DATA_START, b, 0, b.length);
+		System.arraycopy(data, DATA_START, b, 0, b.length); //DO BASE 64 ENCODING HERE
 		return b;
 	}
 	
@@ -53,14 +56,13 @@ public class Packet {
 		return sb.toString();
 	}
 	
-	public byte[] getRawData(){
+	public byte[] getRawData(){ //get raw bytes
 		return data;
 	}
 	
 	public int getType(){
 		return bb.asIntBuffer().get(0);
 	}
-	
 	
 	public String toString(){
 		String retS = "TYPE: " + bb.asIntBuffer().get(0);

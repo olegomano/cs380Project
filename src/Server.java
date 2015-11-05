@@ -79,13 +79,18 @@ public class Server {
 			return false;
 		}
 		
-		private void sendFile(String path){
+		private void sendFile(String path) throws IOException{
 			File toSend = new File(path);
 			if(!toSend.canRead() || !toSend.exists()){
 				System.out.println("ERROR: file to send does not exist, or do not have read privelages");
+				sendErrorMsg();
 				return;
 			}
+		}
 		
+		private void sendErrorMsg() throws IOException{
+			Packet p = new Packet(Packet.TYPE_ERROR);
+			toClient.write(p.getRawData());
 		}
 		
 	}
