@@ -22,6 +22,8 @@ public class Packet {
 	private static final int DATA_START = HASH_END;
 	private static final int DATA_END = PACKET_SIZE;
 	
+	public static int DATA_SECTION_MAX = DATA_END - DATA_START;
+	
 	private byte[] data = new byte[PACKET_SIZE];
 	private ByteBuffer bb = ByteBuffer.wrap(data);
 	

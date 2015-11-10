@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,8 +13,12 @@ public class Client {
 	private Socket server;
 	private OutputStream toServer;
 	private InputStream fromServer;
+	private OutputStream file;
 	private Scanner keyboard = new Scanner(System.in);
 	
+	private boolean fileCreated = false;
+	private File downloadFile;
+	private String workingDir = System.getProperty("user.dir");
 	
 	public void connect(String hostname) throws UnknownHostException, IOException{
 		server = new Socket(hostname,Server.SERVER_PORT);
@@ -32,8 +38,7 @@ public class Client {
 	}
 	
 	private void onPacketRecieved(Packet p) throws IOException{
-		System.out.println("Client recieved packet: " + p.toString());
-		
+		System.out.println("Client recieved packet: " + p.toString());	
 		switch(p.getType()){
 		case Packet.TYPE_USNAME_REQUEST:
 			System.out.println("Enter username: ");
@@ -50,8 +55,29 @@ public class Client {
 			toServer.write(passPacket.getRawData());
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
-			
+			file.write(p.getDataSection());
+			Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
+			toServer.write(responce.getRawData());
 			break;
+		case Packet.TYPE_FILE_INFO:
+			if(!fileCreated){
+				System.out.println("Recieved file info from server");
+				System.out.println("Creating new File " + workingDir+"/"+p.getDataSectionAsString()+"recieved");
+				downloadFile = new File(workingDir+"/"+p.getDataSectionAsString()+"recieved");
+				
+				if(downloadFile.exists()){
+					downloadFile.delete();
+				}
+				if(!downloadFile.createNewFile() ){
+					System.out.println("Failed creating download file");
+				}
+				file = new FileOutputStream(downloadFile);
+				fileCreated = true;
+			}
+			Packet res = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
+			toServer.write(res.getRawData());
+			break;
+			
 		}
 	}
 

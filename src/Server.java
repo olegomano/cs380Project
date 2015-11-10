@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,6 +15,12 @@ public class Server {
 	
 	private final static String username = "oleg";  //TODO: read this dynamicall from file
 	private final static String password = "tolstov";
+	
+	private final static int SUCCESS =  0;
+	private final static int FAILURE = -1;
+	private final static int COMPLETE = 1;
+	
+	
 	
 	public void start() throws IOException{
 		server = new ServerThread();
@@ -40,7 +47,7 @@ public class Server {
 				fromClient = clientSocket.getInputStream();
 				while(!requestUsername()){}
 				while(!requestPassword()){};
-				sendFile("");
+				sendFile("TestData");
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -86,6 +93,70 @@ public class Server {
 				sendErrorMsg();
 				return;
 			}
+			
+			InputStream file = new FileInputStream(toSend);
+			int infoRetryCount = 0;
+			while(!sendFileInfo(toSend) && infoRetryCount < 3){
+				infoRetryCount++;
+				System.out.println("ERROR: failed sending file info, Retrying");
+			}
+			if(infoRetryCount==3){
+				System.out.println("Failed sending file info, aborting connection");
+				clientSocket.close();
+				mSocket.close();
+			}
+			int result = sendFileFrame(file);
+			while(result == SUCCESS){
+				result = sendFileFrame(file);
+			}
+			if(result == FAILURE){
+				System.out.println("ERROR TRANSFERRING FILE");
+			}else{
+				System.out.println("SUCCESFULLY TRASNFERED FILE");
+			}
+			
+		}
+		
+		private boolean sendFileInfo(File f) throws IOException{
+			Packet fileInfo = new Packet(Packet.TYPE_FILE_INFO);
+			fileInfo.putDataSection(f.getName().getBytes());
+			toClient.write(fileInfo.getRawData());
+			
+			byte[] responce = new byte[Packet.PACKET_SIZE];
+			while(fromClient.read(responce)==-1){};
+			
+			Packet rPacket = new Packet(responce);
+			if(rPacket.getType() == Packet.TYPE_DATA_ACKNOWLEDGE){
+				return true;
+			}
+			return false;
+		}
+		
+		private int sendFileFrame(InputStream f) throws IOException{
+			byte[] toSend = new byte[Packet.DATA_SECTION_MAX];
+			int read = f.read(toSend);
+			if(read == -1){
+				return COMPLETE;
+			}
+			
+			Packet packet = new Packet(Packet.TYPE_DATA_TRANSFER);
+			packet.putDataSection(toSend);
+			toClient.write(packet.getRawData());
+			
+			int retryCount = 0;
+			boolean success = false;
+			byte[] responce = new byte[Packet.PACKET_SIZE];
+			while(retryCount < 3 && !success){
+				while(fromClient.read(responce) == -1){};
+				Packet p = new Packet(responce);
+				if(p.getType() == Packet.TYPE_DATA_ACKNOWLEDGE){
+					success = true;
+				}
+				retryCount++;
+			}
+			if(!success){return FAILURE;}
+			
+			return SUCCESS;
 		}
 		
 		private void sendErrorMsg() throws IOException{
