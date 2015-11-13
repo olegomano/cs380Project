@@ -47,7 +47,7 @@ public class Server {
 				fromClient = clientSocket.getInputStream();
 				while(!requestUsername()){}
 				while(!requestPassword()){};
-				sendFile("TestData");
+				sendFile("circuitwall.jpg");
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -135,12 +135,13 @@ public class Server {
 		private int sendFileFrame(InputStream f) throws IOException{
 			byte[] toSend = new byte[Packet.DATA_SECTION_MAX];
 			int read = f.read(toSend);
+			System.out.println("Server Read: " + read + " bytes");
 			if(read == -1){
 				return COMPLETE;
 			}
 			
 			Packet packet = new Packet(Packet.TYPE_DATA_TRANSFER);
-			packet.putDataSection(toSend);
+			packet.putDataSection(toSend,read);
 			toClient.write(packet.getRawData());
 			
 			int retryCount = 0;

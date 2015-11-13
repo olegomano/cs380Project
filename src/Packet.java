@@ -16,8 +16,11 @@ public class Packet {
 	private static final int TYPE_START = 0;
 	private static final int TYPE_END = 4;
 	
-	private static final int HASH_START = TYPE_END;
-	private static final int HASH_END = 132;
+	private static final int SIZE_START = TYPE_END;
+	private static final int SIZE_END = SIZE_START + 4;
+	
+	private static final int HASH_START = SIZE_END;
+	private static final int HASH_END = HASH_START + 8;
 	
 	private static final int DATA_START = HASH_END;
 	private static final int DATA_END = PACKET_SIZE;
@@ -32,7 +35,7 @@ public class Packet {
 	}
 	
 	public Packet(byte[] b){
-		System.arraycopy(b, 0,data, 0, data.length);
+		System.arraycopy(b, 0,data, 0, b.length);
 	}
 	
 	public void putDataSection(byte[] b){
@@ -40,6 +43,31 @@ public class Packet {
 			System.out.println("ERROR ATTEMTPING TO PUT MORE DATA THAN SIZE ALLOWS");
 		}
 		System.arraycopy(b, 0, data, DATA_START, b.length);
+	}
+	
+	public void putDataSection(byte[] b, int size){
+		byte size0 = (byte) ( (size & 0xFF000000) >> 24 );
+		byte size1 = (byte) ( (size & 0xFF0000) >> 16 );
+		byte size2 = (byte) ( (size & 0xFF00) >> 8 );
+		byte size3 = (byte) ( (size & 0xFF) >> 0 );
+		data[SIZE_START]     = size0;
+		data[SIZE_START + 1] = size1;
+		data[SIZE_START + 2] = size2;
+		data[SIZE_START + 3] = size3;
+		putDataSection(b);
+	}
+	
+	public boolean validateHash(){
+		return true;
+	}
+	
+	public int getSize(){
+		int size = (byteToInt(data[SIZE_START]) << 24 ) | (byteToInt(data[SIZE_START + 1]) << 16 ) |(byteToInt(data[SIZE_START + 2]) << 8 )|(byteToInt(data[SIZE_START + 3]) << 0 );
+		return size;
+	}
+	
+	private int byteToInt(byte b){
+		return (int) b & 0xFF;
 	}
 	
 	public byte[] getDataSection(){
@@ -76,6 +104,7 @@ public class Packet {
 		for(int i = DATA_START; i < DATA_END; i++){
 			retS+=data[i]+"|";
 		}
+		retS+="\n DATA size: " + getSize();
 		return retS;
 	}
 }

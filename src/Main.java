@@ -1,9 +1,7 @@
 import java.io.IOException;
 import java.net.UnknownHostException;
 
-
 public class Main {
-
 	/**
 	 * @param args
 	 * @throws IOException 
@@ -13,7 +11,6 @@ public class Main {
 		server.start();
 		Client client = new Client();
 		client.connect("localhost");
-
 	}
 
 }

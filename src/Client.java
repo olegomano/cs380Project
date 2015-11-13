@@ -33,8 +33,7 @@ public class Client {
 				System.out.println("Read data size: " + read + " expected size " + Packet.PACKET_SIZE);
 				onPacketRecieved(new Packet(recievedPacket));
 			}
-		}
-		
+		}	
 	}
 	
 	private void onPacketRecieved(Packet p) throws IOException{
@@ -55,7 +54,7 @@ public class Client {
 			toServer.write(passPacket.getRawData());
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
-			file.write(p.getDataSection());
+			file.write(p.getDataSection(),0,p.getSize());
 			Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
 			toServer.write(responce.getRawData());
 			break;
