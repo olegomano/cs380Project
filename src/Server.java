@@ -42,12 +42,14 @@ public class Server {
 				System.out.println("Listening on port: " + SERVER_PORT +" ");
 				clientSocket = mSocket.accept();
 				System.out.println("Got connection from: " + clientSocket.getInetAddress());
-				
+				clientSocket.setSoTimeout(50000);
 				toClient = clientSocket.getOutputStream();
 				fromClient = clientSocket.getInputStream();
 				while(!requestUsername()){}
 				while(!requestPassword()){};
-				sendFile("circuitwall.jpg");
+				sendFile(Main.FILE_PATH);
+				clientSocket.close();
+				mSocket.close();
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -110,9 +112,13 @@ public class Server {
 				result = sendFileFrame(file);
 			}
 			if(result == FAILURE){
+				Packet fail = new Packet(Packet.TYPE_CONNECTION_CLOSED);
+				toClient.write(fail.getRawData());
 				System.out.println("ERROR TRANSFERRING FILE");
 			}else{
 				System.out.println("SUCCESFULLY TRASNFERED FILE");
+				Packet success = new Packet(Packet.TYPE_TRANSFER_COMPLETE);
+				toClient.write(success.getRawData());
 			}
 			
 		}
@@ -145,19 +151,17 @@ public class Server {
 			toClient.write(packet.getRawData());
 			
 			int retryCount = 0;
-			boolean success = false;
 			byte[] responce = new byte[Packet.PACKET_SIZE];
-			while(retryCount < 3 && !success){
+			while(retryCount < 3){
 				while(fromClient.read(responce) == -1){};
 				Packet p = new Packet(responce);
 				if(p.getType() == Packet.TYPE_DATA_ACKNOWLEDGE){
-					success = true;
+					return SUCCESS;
 				}
 				retryCount++;
+				System.out.println("RESENDING PACKET, ATTEMPT " + retryCount);
 			}
-			if(!success){return FAILURE;}
-			
-			return SUCCESS;
+			return FAILURE;
 		}
 		
 		private void sendErrorMsg() throws IOException{

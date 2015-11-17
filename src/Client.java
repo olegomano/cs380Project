@@ -20,6 +20,7 @@ public class Client {
 	private File downloadFile;
 	private String workingDir = System.getProperty("user.dir");
 	
+	private boolean transfering = true;
 	public void connect(String hostname) throws UnknownHostException, IOException{
 		server = new Socket(hostname,Server.SERVER_PORT);
 		
@@ -27,13 +28,14 @@ public class Client {
 		fromServer = server.getInputStream();
 		
 		byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
-		while(true){
+		while(transfering){
 			int read = fromServer.read(recievedPacket);
 			if(read != -1){
 				System.out.println("Read data size: " + read + " expected size " + Packet.PACKET_SIZE);
 				onPacketRecieved(new Packet(recievedPacket));
 			}
-		}	
+		}
+		server.close();
 	}
 	
 	private void onPacketRecieved(Packet p) throws IOException{
@@ -54,15 +56,20 @@ public class Client {
 			toServer.write(passPacket.getRawData());
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
-			file.write(p.getDataSection(),0,p.getSize());
-			Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
-			toServer.write(responce.getRawData());
+			if(p.validateHash()){
+				file.write(p.getDataSection(),0,p.getSize());
+				Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
+				toServer.write(responce.getRawData());
+			}else{
+				Packet responce = new Packet(Packet.TYPE_ERROR);
+				toServer.write(responce.getRawData());	
+			}
 			break;
 		case Packet.TYPE_FILE_INFO:
 			if(!fileCreated){
 				System.out.println("Recieved file info from server");
 				System.out.println("Creating new File " + workingDir+"/"+p.getDataSectionAsString()+"recieved");
-				downloadFile = new File(workingDir+"/"+p.getDataSectionAsString()+"recieved");
+				downloadFile = new File(workingDir+"/"+p.getDataSectionAsString());
 				
 				if(downloadFile.exists()){
 					downloadFile.delete();
@@ -75,6 +82,14 @@ public class Client {
 			}
 			Packet res = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
 			toServer.write(res.getRawData());
+			break;
+		case Packet.TYPE_CONNECTION_CLOSED:
+			System.out.println("Server closed connection!");
+			transfering = false;
+			break;
+		case Packet.TYPE_TRANSFER_COMPLETE:
+			System.out.println("Transfer succesfull!");
+			transfering = false;
 			break;
 			
 		}

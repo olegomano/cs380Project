@@ -9,6 +9,8 @@ public class Packet {
 	public static final int TYPE_DATA_ACKNOWLEDGE =4;
 	public static final int TYPE_FILE_INFO = 5;
 	public static final int TYPE_ERROR = 6;
+	public static final int TYPE_TRANSFER_COMPLETE = 7;
+	public static final int TYPE_CONNECTION_CLOSED = 8;
 	
 	public static final String ERROR_FILE_NOT_FOUND = "FILE_NOT_FOUND";
 	public static final String ERROR_REACHED_MAX_RETRY = "REACHED_MAX_RETRY";
