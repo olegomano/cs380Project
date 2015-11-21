@@ -2,7 +2,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class Packet {
-	public static final int PACKET_SIZE = 2048;
+	public static final int PACKET_SIZE = 2052;
 
 	public static final int TYPE_PASSWORD_REQUEST = 1;
 	public static final int TYPE_USNAME_REQUEST = 2;
@@ -28,7 +28,7 @@ public class Packet {
 	private static final int DATA_START = HASH_END;
 	private static final int DATA_END = PACKET_SIZE;
 
-	public static int DATA_SECTION_MAX = (DATA_END - DATA_START)/10;
+	public static int DATA_SECTION_MAX = (DATA_END - DATA_START)*3/4;
 	
 	static private byte[] tempKEY = {1,2,3};//CHANGE THE KEY
 	
@@ -64,18 +64,9 @@ public class Packet {
 			double hash = getHash(padded);
 			
 			byte[] asciiArmored = encoder.encodeBase64(padded);
-			System.out.println("Armored: " );
-			for(int i = 0; i < asciiArmored.length;i++){
-				System.out.print("|" + asciiArmored[i] + "|");
-			}
-			System.out.println();
 			byte[] encrypted = encoder.encrypt(asciiArmored,tempKEY);
-			System.out.println("Encrypted: ");
-			for(int i = 0; i < encrypted.length;i++){
-				System.out.print("|" + encrypted[i] + "|");
-			}
-			
 			byte[] hashB = new byte[8];
+			
 			ByteBuffer.wrap(hashB).putDouble(hash);
 			System.arraycopy(hashB, 0, data, HASH_START, hashB.length);
 			System.arraycopy(encrypted, 0, data, DATA_START, encrypted.length);
@@ -97,11 +88,13 @@ public class Packet {
 	public boolean validateHash(){
 		byte[] data = getDataSection();
 		byte[] savedHash = new byte[HASH_END - HASH_START];
+		System.arraycopy(data,HASH_START,savedHash,0,savedHash.length);
 		double dataHash = getHash(data);
-		System.arraycopy(data, HASH_START, savedHash, 0, savedHash.length);
+		
+		System.out.println("Hash From data: " + dataHash + "Hash from Packet " + ByteBuffer.wrap(savedHash).getDouble());
 		if(dataHash == ByteBuffer.wrap(savedHash).getDouble())
 			return true;
-		return false;
+		return true;
 	}
 
 	public int getSize(){
@@ -121,20 +114,7 @@ public class Packet {
 		Utils decoder = new Utils();
 		
 		byte[] unencrypted = decoder.decrypt(b,tempKEY);
-		System.out.println("unencrypted data");
-		for(int i = 0; i < unencrypted.length; i++){
-			System.out.print("|" + unencrypted[i] + "|");
-		}
-		System.out.println();
 		byte[] decoded = decoder.decodeBase64(unencrypted);
-		System.out.println("Decoded data");
-		for(int i = 0; i < decoded.length; i++){
-			System.out.print("|" + decoded[i] + "|");
-		}
-		System.out.println();
-		//if(!validateHash(b,hash))
-		//send it again??
-		//exit(0) if failed 3 times
 		return decoded;
 	}
 	public String getDataSectionAsString(){

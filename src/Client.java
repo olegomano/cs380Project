@@ -68,8 +68,10 @@ public class Client {
 		case Packet.TYPE_FILE_INFO:
 			if(!fileCreated){
 				System.out.println("Recieved file info from server");
-				System.out.println("Creating new File " + workingDir+"/"+p.getDataSectionAsString()+"recieved");
-				downloadFile = new File(workingDir+"/"+p.getDataSectionAsString());
+				byte[] fName = new byte[p.getSize()];
+				System.arraycopy(p.getDataSection(),0,fName,0,fName.length);
+				System.out.println("Creating new File " + workingDir+"/"+new String(fName)+"recieved");
+				downloadFile = new File(workingDir+"/"+new String(fName));
 				
 				if(downloadFile.exists()){
 					downloadFile.delete();
