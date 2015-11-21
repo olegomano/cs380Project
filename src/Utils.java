@@ -1,19 +1,19 @@
 
-package assignment2;
+
 
 //import IllegalArgumentException;
 //import String;
 
-
+ 
 public class Utils {
-
+	/*
 	public static void main(String[] args){
 		byte[] tempArray = {'A', '2', '3', 'B', '2', '2', '1'};
 		byte[] tempKey = {28, 24, 21, 22, 64};
 		System.out.println(new String(decrypt(encrypt(encodeBase64(tempArray), tempKey), tempKey)));
 		System.out.println(new String(encodeBase64(tempArray)));
 	}
-
+	*/
 	public static byte[] encodeBase64(byte[] in){
 		/*
 		 * encodes the given byte array into an acceptable 
@@ -75,10 +75,10 @@ public class Utils {
 			//redundant possibly
 			fillerLength = 0;
 		}
-		//System.out.println("filler length"+fillerLength);
+		System.out.println("filler length"+fillerLength);
 		int outCounter = 0;
 		byte[] out = new byte[(in.length*3)/4 - fillerLength];
-		//System.out.println("length of output array:"+out.length);
+		System.out.println("length of output array:"+out.length);
 		for(int i = 0; i<in.length; i+=4){
 			out[outCounter] = (byte)(((in[i]-65) << 2) | ((in[i+1]-65) >> 4));
 			if(outCounter+1 < out.length){
@@ -96,7 +96,7 @@ public class Utils {
 	public static byte[] encrypt(byte[] in, byte[] key){
 		byte[] out = new byte[in.length];
 		for(int i = 0; i<in.length; i+= key.length){
-			out[i] = (byte)(in[i]^key[i%key.length]);
+			out[i] = (byte)(toInt(in[i])^toInt(key[i%key.length]));
 		}
 		return out;
 	}
@@ -104,4 +104,9 @@ public class Utils {
 	public static byte[] decrypt(byte[] in, byte[] key){
 		return encrypt(in, key);
 	}
+
+	public static int toInt(byte b){
+        return ((int) b) & 0xff;
+    }
+
 }

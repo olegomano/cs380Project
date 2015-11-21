@@ -45,14 +45,14 @@ public class Client {
 			System.out.println("Enter username: ");
 			String usname = keyboard.nextLine();
 			Packet usnamePacket = new Packet(Packet.TYPE_DATA_TRANSFER);
-			usnamePacket.putDataSection(usname.getBytes());
+			usnamePacket.putDataSection(usname.getBytes(),usname.getBytes().length);
 			toServer.write(usnamePacket.getRawData());
 			break;
 		case Packet.TYPE_PASSWORD_REQUEST:
 			System.out.println("Enter password: ");
 			String password = keyboard.nextLine();
 			Packet passPacket = new Packet(Packet.TYPE_DATA_TRANSFER);
-			passPacket.putDataSection(password.getBytes());
+			passPacket.putDataSection(password.getBytes(),password.getBytes().length);
 			toServer.write(passPacket.getRawData());
 			break;
 		case Packet.TYPE_DATA_TRANSFER:

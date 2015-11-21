@@ -64,7 +64,10 @@ public class Server {
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
 			System.out.println("recieved packet from client " + fClient.toString());
-			String usernameString = fClient.getDataSectionAsString();
+			byte[] usefullBits = new byte[fClient.getSize()];
+			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
+			String usernameString = new String(usefullBits);
+			System.out.println("Recived Username From client: " + usernameString);
 			int comparison = usernameString.compareToIgnoreCase(Server.username); 
 			if( comparison == 0){
 				return true;
@@ -80,8 +83,11 @@ public class Server {
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
 			System.out.println("recieved packet from client " + fClient.toString());
-			String usernameString = fClient.getDataSectionAsString();
-			int comparison = usernameString.compareToIgnoreCase(Server.password); 
+			byte[] usefullBits = new byte[fClient.getSize()];
+			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
+			String passwordString = new String(usefullBits);
+			System.out.println("Recived Password From client: " + passwordString);
+			int comparison = passwordString.compareToIgnoreCase(Server.password); 
 			if( comparison == 0){
 				return true;
 			}
