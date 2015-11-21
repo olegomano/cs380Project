@@ -95,8 +95,12 @@ public class Utils {
 
 	public static byte[] encrypt(byte[] in, byte[] key){
 		byte[] out = new byte[in.length];
-		for(int i = 0; i<in.length; i+= key.length){
-			out[i] = (byte)(toInt(in[i])^toInt(key[i%key.length]));
+		System.arraycopy(in, 0, out, 0, in.length);
+		int j = 0;
+		for(int i = 0; i+j<in.length; i+= key.length){
+			for(j = 0;j<key.length && i+j<in.length; j++){
+				out[i+j] ^= key[j];
+			}
 		}
 		return out;
 	}
@@ -104,9 +108,5 @@ public class Utils {
 	public static byte[] decrypt(byte[] in, byte[] key){
 		return encrypt(in, key);
 	}
-
-	public static int toInt(byte b){
-        return ((int) b) & 0xff;
-    }
 
 }
