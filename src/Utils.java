@@ -1,10 +1,11 @@
+package assignment2;
 
 
 public class Utils {
 	/*
 	public static void main(String[] args){
 		byte[] tempArray = {'A', '2', '3', 'B', '2', '2', '1'};
-		byte[] tempKey = {28, 24};
+		byte[] tempKey = {28, 24, 21, 22, 64};
 		System.out.println(new String(decrypt(encrypt(encodeBase64(tempArray), tempKey), tempKey)));
 		System.out.println(new String(encodeBase64(tempArray)));
 	}
@@ -91,9 +92,10 @@ public class Utils {
 	public static byte[] encrypt(byte[] in, byte[] key){
 		int j = 0;
 		for(int i = 0; i+j<in.length; i+= key.length){
-			for(j=0 ; j<key.length; j++){
+			for(j=0 ; j<key.length && i+j<in.length; j++){
 				in[i+j] ^= key[j];
 			}
+			
 		}
 		return in;
 	}
