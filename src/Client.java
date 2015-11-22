@@ -45,14 +45,14 @@ public class Client {
 			System.out.println("Enter username: ");
 			String usname = keyboard.nextLine();
 			Packet usnamePacket = new Packet(Packet.TYPE_DATA_TRANSFER);
-			usnamePacket.putDataSection(usname.getBytes());
+			usnamePacket.putDataSection(usname.getBytes(),usname.getBytes().length);
 			toServer.write(usnamePacket.getRawData());
 			break;
 		case Packet.TYPE_PASSWORD_REQUEST:
 			System.out.println("Enter password: ");
 			String password = keyboard.nextLine();
 			Packet passPacket = new Packet(Packet.TYPE_DATA_TRANSFER);
-			passPacket.putDataSection(password.getBytes());
+			passPacket.putDataSection(password.getBytes(),password.getBytes().length);
 			toServer.write(passPacket.getRawData());
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
@@ -68,8 +68,10 @@ public class Client {
 		case Packet.TYPE_FILE_INFO:
 			if(!fileCreated){
 				System.out.println("Recieved file info from server");
-				System.out.println("Creating new File " + workingDir+"/"+p.getDataSectionAsString()+"recieved");
-				downloadFile = new File(workingDir+"/"+p.getDataSectionAsString());
+				byte[] fName = new byte[p.getSize()];
+				System.arraycopy(p.getDataSection(),0,fName,0,fName.length);
+				System.out.println("Creating new File " + workingDir+"/"+new String(fName)+"recieved");
+				downloadFile = new File(workingDir+"/"+new String(fName));
 				
 				if(downloadFile.exists()){
 					downloadFile.delete();

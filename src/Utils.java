@@ -1,10 +1,15 @@
 
 
+
+//import IllegalArgumentException;
+//import String;
+
+ 
 public class Utils {
 	/*
 	public static void main(String[] args){
 		byte[] tempArray = {'A', '2', '3', 'B', '2', '2', '1'};
-		byte[] tempKey = {28, 24};
+		byte[] tempKey = {28, 24, 21, 22, 64};
 		System.out.println(new String(decrypt(encrypt(encodeBase64(tempArray), tempKey), tempKey)));
 		System.out.println(new String(encodeBase64(tempArray)));
 	}
@@ -17,7 +22,16 @@ public class Utils {
 		 * separate bytes into 6 bit segments then translate to bytes again
 		 * return the new byte array created by this process
 		 */
-		byte[] padded = new byte[in.length + (3-in.length%3)];
+		System.out.println("Encode in length: " + in.length);
+		int mod = in.length % 3;
+		byte[] padded = null;
+		if(mod == 0){
+			padded = new byte[in.length];
+		}
+		else{
+			padded = new byte[in.length + mod];
+		}
+		System.out.println("Padded length: " + padded.length);
 		System.arraycopy(in, 0, padded, 0, in.length);
 
 		byte[] out = new byte[(padded.length*4)/3];
@@ -43,7 +57,7 @@ public class Utils {
 				}else{
 					out[outCounter+2] = (byte)(n + 65);
 					out[outCounter+3] = '=';
-			}
+				}
 			}else{
 				out[outCounter+1] = (byte)(n + 65);
 				out[outCounter+2] = '=';
@@ -73,7 +87,7 @@ public class Utils {
 		//System.out.println("filler length"+fillerLength);
 		int outCounter = 0;
 		byte[] out = new byte[(in.length*3)/4 - fillerLength];
-		//System.out.println("length of output array:"+out.length);
+		System.out.println("length of output array:"+out.length);
 		for(int i = 0; i<in.length; i+=4){
 			out[outCounter] = (byte)(((in[i]-65) << 2) | ((in[i+1]-65) >> 4));
 			if(outCounter+1 < out.length){
@@ -89,23 +103,19 @@ public class Utils {
 	}
 
 	public static byte[] encrypt(byte[] in, byte[] key){
+		byte[] out = new byte[in.length];
+		System.arraycopy(in, 0, out, 0, in.length);
 		int j = 0;
 		for(int i = 0; i+j<in.length; i+= key.length){
-			for(j=0 ; j<key.length; j++){
-				in[i+j] ^= key[j];
+			for(j = 0;j<key.length && i+j<in.length; j++){
+				out[i+j] ^= key[j];
 			}
 		}
-		return in;
+		return out;
 	}
 
 	public static byte[] decrypt(byte[] in, byte[] key){
-		int j = 0;
-		for(int i = 0; i+j<in.length; i+= key.length){
-			for(j=0 ; j<key.length; j++){
-				in[i+j] ^= key[j];
-			}
-		}
-		return in;
+		return encrypt(in, key);
 	}
 
 }

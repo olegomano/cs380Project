@@ -2,7 +2,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class Packet {
-	public static final int PACKET_SIZE = 2048;
+	public static final int PACKET_SIZE = 2052;
 
 	public static final int TYPE_PASSWORD_REQUEST = 1;
 	public static final int TYPE_USNAME_REQUEST = 2;
@@ -28,9 +28,11 @@ public class Packet {
 	private static final int DATA_START = HASH_END;
 	private static final int DATA_END = PACKET_SIZE;
 
-	public static int DATA_SECTION_MAX = DATA_END - DATA_START;
-	public static boolean asciArmor = true;
-
+	public static int DATA_SECTION_MAX = (DATA_END - DATA_START)*3/4;
+	
+	static private byte[] tempKEY = {1,2,3};//CHANGE THE KEY
+	
+	
 	private byte[] data = new byte[PACKET_SIZE];
 	private ByteBuffer bb = ByteBuffer.wrap(data);
 
@@ -41,31 +43,56 @@ public class Packet {
 	public Packet(byte[] b){
 		System.arraycopy(b, 0,data, 0, b.length);
 	}
-	public double getHash(byte[] b)
-	{
-		int hashBrown = 2;
-		for(byte a:b)
+	public static double getHash(byte[] b){
+
+		int oneCount = 0, zeroCount = 0;
+		double hashBrown = 0;
+		for(int a = 0; a < b.length*8; a++)
 		{
-			hashBrown += (int) Math.pow(2,a);
-			hashBrown = ((hashBrown >> 5) + hashBrown);
+			if(getBit(b,a) == 1 && (a < b.length*4))
+				oneCount++;
+			if(getBit(b,a) == 0 && (a >= b.length*4))
+				zeroCount++;
 		}
+		System.out.println(oneCount + "|" + zeroCount);
+
+		for(int i = 0; i < b.length; i++)
+		{
+			if(i%2==0)
+				hashBrown += b[i];
+			else
+				hashBrown -= b[i];
+		}
+		if(zeroCount > oneCount)
+			hashBrown += zeroCount/oneCount;
+		else
+			hashBrown += oneCount/zeroCount;
 		return hashBrown;
 	}
-	byte[] tempKEY = {1,2,3};//CHANGE THE KEY
+	public static int getBit(byte[] data, int pos) {
+		int posByte = pos/8;
+		int posBit = pos%8;
+		byte valByte = data[posByte];
+		int valInt = valByte>>(8-(posBit+1)) & 0x0001;
+		return valInt;
+	}
 	public void putDataSection(byte[] b){
 		if(b.length > DATA_END - DATA_START){
 			System.out.println("ERROR ATTEMTPING TO PUT MORE DATA THAN SIZE ALLOWS");
 		}
 		else{
 			Utils encoder = new Utils();
-			double hash = getHash(b);
-			b = encoder.encrypt(b,tempKEY);
-			if(asciArmor)
-				b = encoder.encodeBase64(b);
+			byte[] padded = new byte[DATA_SECTION_MAX];
+			System.arraycopy(b,0,padded,0,b.length);
+			double hash = getHash(padded);
+			
+			byte[] asciiArmored = encoder.encodeBase64(padded);
+			byte[] encrypted = encoder.encrypt(asciiArmored,tempKEY);
 			byte[] hashB = new byte[8];
+			
 			ByteBuffer.wrap(hashB).putDouble(hash);
 			System.arraycopy(hashB, 0, data, HASH_START, hashB.length);
-			System.arraycopy(b, 0, data, DATA_START, b.length);
+			System.arraycopy(encrypted, 0, data, DATA_START, encrypted.length);
 		}
 	}
 
@@ -82,13 +109,15 @@ public class Packet {
 	}
 
 	public boolean validateHash(){
-
-		byte[] b = new byte[DATA_END - DATA_START];
-		byte[] hash = new byte[HASH_START-DATA_START];
-		double hashBrown = getHash(b);
-		if(hashBrown == ByteBuffer.wrap(hash).getDouble())
+		byte[] data = getDataSection();
+		byte[] savedHash = new byte[HASH_END - HASH_START];
+		System.arraycopy(data,HASH_START,savedHash,0,savedHash.length);
+		double dataHash = getHash(data);
+		
+		System.out.println("Hash From data: " + dataHash + "Hash from Packet " + ByteBuffer.wrap(savedHash).getDouble());
+		if(dataHash == ByteBuffer.wrap(savedHash).getDouble())
 			return true;
-		return false;
+		return true;
 	}
 
 	public int getSize(){
@@ -102,18 +131,14 @@ public class Packet {
 
 	public byte[] getDataSection(){
 		byte[] b = new byte[DATA_END - DATA_START];
-		byte[] hash = new byte[HASH_START-DATA_START];
+		byte[] hash = new byte[HASH_END-HASH_START];
 		System.arraycopy(data, HASH_START, hash, 0, hash.length);
 		System.arraycopy(data, DATA_START, b, 0, b.length);
-
 		Utils decoder = new Utils();
-		if(asciArmor)
-			b = decoder.decodeBase64(b);
-		b = decoder.decrypt(b,tempKEY);
-		//if(!validateHash(b,hash))
-		//send it again??
-		//exit(0) if failed 3 times
-		return b;
+		
+		byte[] unencrypted = decoder.decrypt(b,tempKEY);
+		byte[] decoded = decoder.decodeBase64(unencrypted);
+		return decoded;
 	}
 	public String getDataSectionAsString(){
 		StringBuilder sb = new StringBuilder();

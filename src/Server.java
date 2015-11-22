@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 
 
 public class Server {
-	public static final int SERVER_PORT = 4445;
+	public static final int SERVER_PORT = 10114;
 	private ServerThread server;
 	
 	private final static String username = "oleg";  //TODO: read this dynamicall from file
@@ -64,7 +64,11 @@ public class Server {
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
 			System.out.println("recieved packet from client " + fClient.toString());
-			String usernameString = fClient.getDataSectionAsString();
+			byte[] usefullBits = new byte[fClient.getSize()];
+			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
+			String usernameString = new String(usefullBits);
+			System.out.println("Recived Username From client: " + usernameString);
+			
 			int comparison = usernameString.compareToIgnoreCase(Server.username); 
 			if( comparison == 0){
 				return true;
@@ -80,8 +84,13 @@ public class Server {
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
 			System.out.println("recieved packet from client " + fClient.toString());
-			String usernameString = fClient.getDataSectionAsString();
-			int comparison = usernameString.compareToIgnoreCase(Server.password); 
+			
+			byte[] usefullBits = new byte[fClient.getSize()];
+			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
+			String passwordString = new String(usefullBits);
+			System.out.println("Recived Password From client: " + passwordString);
+			
+			int comparison = passwordString.compareToIgnoreCase(Server.password); 
 			if( comparison == 0){
 				return true;
 			}
@@ -125,7 +134,7 @@ public class Server {
 		
 		private boolean sendFileInfo(File f) throws IOException{
 			Packet fileInfo = new Packet(Packet.TYPE_FILE_INFO);
-			fileInfo.putDataSection(f.getName().getBytes());
+			fileInfo.putDataSection(f.getName().getBytes(),f.getName().getBytes().length);
 			toClient.write(fileInfo.getRawData());
 			
 			byte[] responce = new byte[Packet.PACKET_SIZE];
@@ -146,9 +155,9 @@ public class Server {
 				return COMPLETE;
 			}
 			
-			Packet packet = new Packet(Packet.TYPE_DATA_TRANSFER);
-			packet.putDataSection(toSend,read);
-			toClient.write(packet.getRawData());
+			Packet fileFrame = new Packet(Packet.TYPE_DATA_TRANSFER);
+			fileFrame.putDataSection(toSend,read);
+			toClient.write(fileFrame.getRawData());
 			
 			int retryCount = 0;
 			byte[] responce = new byte[Packet.PACKET_SIZE];
@@ -160,6 +169,7 @@ public class Server {
 				}
 				retryCount++;
 				System.out.println("RESENDING PACKET, ATTEMPT " + retryCount);
+				toClient.write(fileFrame.getRawData());
 			}
 			return FAILURE;
 		}
