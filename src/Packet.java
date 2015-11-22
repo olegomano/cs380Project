@@ -29,6 +29,7 @@ public class Packet {
 	private static final int DATA_END = PACKET_SIZE;
 
 	public static int DATA_SECTION_MAX = DATA_END - DATA_START;
+	public static boolean asciArmor = true;
 
 	private byte[] data = new byte[PACKET_SIZE];
 	private ByteBuffer bb = ByteBuffer.wrap(data);
@@ -59,7 +60,8 @@ public class Packet {
 			Utils encoder = new Utils();
 			double hash = getHash(b);
 			b = encoder.encrypt(b,tempKEY);
-			b = encoder.encodeBase64(b);
+			if(asciArmor)
+				b = encoder.encodeBase64(b);
 			byte[] hashB = new byte[8];
 			ByteBuffer.wrap(hashB).putDouble(hash);
 			System.arraycopy(hashB, 0, data, HASH_START, hashB.length);
@@ -79,9 +81,11 @@ public class Packet {
 		putDataSection(b);
 	}
 
-	public boolean validateHash(byte[] in,byte[] hash){
+	public boolean validateHash(){
 
-		double hashBrown = getHash(in);
+		byte[] b = new byte[DATA_END - DATA_START];
+		byte[] hash = new byte[HASH_START-DATA_START];
+		double hashBrown = getHash(b);
 		if(hashBrown == ByteBuffer.wrap(hash).getDouble())
 			return true;
 		return false;
@@ -103,7 +107,8 @@ public class Packet {
 		System.arraycopy(data, DATA_START, b, 0, b.length);
 
 		Utils decoder = new Utils();
-		b = decoder.decodeBase64(b);
+		if(asciArmor)
+			b = decoder.decodeBase64(b);
 		b = decoder.decrypt(b,tempKEY);
 		//if(!validateHash(b,hash))
 		//send it again??
