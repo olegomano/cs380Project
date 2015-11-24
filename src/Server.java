@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 
 
 public class Server {
-	public static final int SERVER_PORT = 10114;
+	public static int SERVER_PORT = 10114;
 	private ServerThread server;
 	
 	private final static String username = "oleg";  //TODO: read this dynamicall from file

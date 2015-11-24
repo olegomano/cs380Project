@@ -23,10 +23,8 @@ public class Client {
 	private boolean transfering = true;
 	public void connect(String hostname) throws UnknownHostException, IOException{
 		server = new Socket(hostname,Server.SERVER_PORT);
-		
 		toServer = server.getOutputStream();
 		fromServer = server.getInputStream();
-		
 		byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 		while(transfering){
 			int read = fromServer.read(recievedPacket);
@@ -70,8 +68,8 @@ public class Client {
 				System.out.println("Recieved file info from server");
 				byte[] fName = new byte[p.getSize()];
 				System.arraycopy(p.getDataSection(),0,fName,0,fName.length);
-				System.out.println("Creating new File " + workingDir+"/"+new String(fName)+"recieved");
-				downloadFile = new File(workingDir+"/"+new String(fName));
+				System.out.println("Creating new File " + Main.FILE_PATH + new String(fName));
+				downloadFile = new File(Main.FILE_PATH+"/"+new String(fName));
 				
 				if(downloadFile.exists()){
 					downloadFile.delete();
@@ -85,6 +83,7 @@ public class Client {
 			Packet res = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
 			toServer.write(res.getRawData());
 			break;
+		case Packet.TYPE_ERROR:	
 		case Packet.TYPE_CONNECTION_CLOSED:
 			System.out.println("Server closed connection!");
 			transfering = false;

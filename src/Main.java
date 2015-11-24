@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
@@ -6,54 +9,111 @@ public class Main {
 	 * @param args
 	 * @throws IOException 
 	 */
+	
+	private static String F_PATH = "-f";
+	private static String KEY_PATH = "-k";
 	private static String SERVER_MODE = "-s";
 	private static String CLIENT_MODE = "-c";
+	private static String ASCII_ARMOR = "-a";
+	private static String HASH_FAIL = "-h";
+	private static String COMMAND_LIST = "-help";
+	private static String PORT_NUMBER = "-p";
 	
-	public static String FILE_PATH = "";
-	public static String KEY_PATH = "";
+	private static String[] commandList = {
+		SERVER_MODE,
+		CLIENT_MODE,
+		ASCII_ARMOR,
+		HASH_FAIL,
+		COMMAND_LIST,
+	};
+	
+	public static boolean FAIL_HASH = false;
+	public static String FILE_PATH = "";	
+	public static byte[] KEY;
+	public static boolean ASCII_ARMORED = false;
 	
 	public static void main(String[] args) throws IOException {
-		byte[] tstkey = {1,2,3};
-		byte[] data = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
+		Server.SERVER_PORT= getPortNumber(args);
+		loadKey(getKeyPath(args));
+		ASCII_ARMORED = asciiArmored(args);
+		FILE_PATH = getFilePath(args);
+		FAIL_HASH = isHashFailed(args);
 		
-		String original = "|";
-		for(int i = 0; i < data.length; i++){
-			original+= data[i] + "|";
-		}
-		System.out.println("Origin\n" + original);
-		
-		
-		byte[] encrypted = Utils.encrypt(data, tstkey);
-		String enc = "|";
-		for(int i = 0; i < encrypted.length; i++){
-			enc+= encrypted[i] + "|";
-		}
-		System.out.println("ENCRYPTED\n" + enc);
-		
-		byte[] decrypted = Utils.encrypt(encrypted, tstkey);
-		String dec = "|";
-		for(int i = 0; i < decrypted.length; i++){
-			dec+= decrypted[i] + "|";
-		}
-		System.out.println("DECRYPTED\n" + dec);
-		
-		
-		
-		if(args[0].compareTo(SERVER_MODE) == 0){
-			
+		if(isClient(args)){
+			Client client = new Client();
+			client.connect("192.168.50.2");
+		}else{
 			Server server = new Server();
 			server.start();
-			FILE_PATH = args[1];
-		//	KEY_PATH = args[2];
-			
-		}else if(args[0].compareTo(CLIENT_MODE) ==0 ){
-			Client client = new Client();
-			client.connect("localhost");	
-	//		KEY_PATH = args[1];
-		}else{
-			System.out.println("Invalid parameters");
 		}
 		
+	}
+	
+	private static int getPortNumber(String[] arr){
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(PORT_NUMBER) == 0){
+				return Integer.parseInt(arr[i + 1]);
+			}
+		}
+		return -1;
+		
+		
+	}
+	
+	private static boolean isClient(String[] arr){
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(SERVER_MODE) == 0){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private static boolean asciiArmored(String[] arr){
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(ASCII_ARMOR) == 0){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static boolean isHashFailed(String[] arr){
+		int mode = -1;
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(HASH_FAIL) == 0){
+				mode = i;
+			}
+		}
+		return !(mode == -1);
+	}
+	
+	private static String getKeyPath(String[] arr){
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(KEY_PATH) == 0){
+				return arr[i+1];
+			}
+		}
+		return null;
+	}
+	
+	private static String getFilePath(String[] arr){
+		for(int i =0; i < arr.length; i++){
+			if(arr[i].compareTo(F_PATH) == 0){
+				return arr[i+1];
+			}
+		}
+		return null;
+	}
+	
+	
+	
+	private static void loadKey(String path) throws IOException{
+		File f = new File(path);
+		FileInputStream in = new FileInputStream(f);
+		KEY = new byte[in.available()];
+		System.out.println("Read key length: " + KEY.length);
+		in.read(KEY);
 	}
 
 }

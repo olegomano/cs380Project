@@ -30,7 +30,6 @@ public class Packet {
 
 	public static int DATA_SECTION_MAX = (DATA_END - DATA_START)*3/4;
 	
-	static private byte[] tempKEY = {1,2,3};//CHANGE THE KEY
 	
 	
 	private byte[] data = new byte[PACKET_SIZE];
@@ -62,11 +61,14 @@ public class Packet {
 			byte[] padded = new byte[DATA_SECTION_MAX];
 			System.arraycopy(b,0,padded,0,b.length);
 			double hash = getHash(padded);
-			
-			byte[] asciiArmored = encoder.encodeBase64(padded);
-			byte[] encrypted = encoder.encrypt(asciiArmored,tempKEY);
+			byte[] asciiArmored = new byte[DATA_SECTION_MAX];
+			if(Main.ASCII_ARMORED){
+				asciiArmored = encoder.encodeBase64(padded);
+			}else{
+				System.arraycopy(padded,0,asciiArmored,0,DATA_SECTION_MAX);
+			}
+			byte[] encrypted = encoder.encrypt(asciiArmored,Main.KEY);
 			byte[] hashB = new byte[8];
-			
 			ByteBuffer.wrap(hashB).putDouble(hash);
 			System.arraycopy(hashB, 0, data, HASH_START, hashB.length);
 			System.arraycopy(encrypted, 0, data, DATA_START, encrypted.length);
@@ -111,11 +113,13 @@ public class Packet {
 		byte[] hash = new byte[HASH_END-HASH_START];
 		System.arraycopy(data, HASH_START, hash, 0, hash.length);
 		System.arraycopy(data, DATA_START, b, 0, b.length);
-		Utils decoder = new Utils();
+		byte[] unencrypted = Utils.decrypt(b,Main.KEY);
+		if(Main.ASCII_ARMORED){
+			byte[] decoded = Utils.decodeBase64(unencrypted);
+			return decoded;
+		}
+		return unencrypted;
 		
-		byte[] unencrypted = decoder.decrypt(b,tempKEY);
-		byte[] decoded = decoder.decodeBase64(unencrypted);
-		return decoded;
 	}
 	public String getDataSectionAsString(){
 		StringBuilder sb = new StringBuilder();
