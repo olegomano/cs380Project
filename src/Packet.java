@@ -42,15 +42,36 @@ public class Packet {
 	public Packet(byte[] b){
 		System.arraycopy(b, 0,data, 0, b.length);
 	}
-	public double getHash(byte[] b)
-	{
-		int hashBrown = 2;
-		for(int a = 0; a < b.length; a++)
+	public static double getHash(byte[] b){
+		int oneCount = 0, zeroCount = 0;
+		double hashBrown = 0;
+		for(int a = 0; a < b.length*8; a++)
 		{
-			hashBrown += (int) Math.pow(2,a);
-			hashBrown = ((hashBrown >> 5) + hashBrown);
+			if(getBit(b,a) == 1 && (a < b.length*4))
+				oneCount++;
+			if(getBit(b,a) == 0 && (a >= b.length*4))
+				zeroCount++;
 		}
+		System.out.println(oneCount + "|" + zeroCount);
+		for(int i = 0; i < b.length; i++)
+		{
+			if(i%2==0)
+				hashBrown += b[i];
+			else
+				hashBrown -= b[i];
+		}
+		if(zeroCount > oneCount)
+			hashBrown += zeroCount/oneCount;
+		else
+			hashBrown += oneCount/zeroCount;
 		return hashBrown;
+	}
+	public static int getBit(byte[] data, int pos) {
+		int posByte = pos/8;
+		int posBit = pos%8;
+		byte valByte = data[posByte];
+		int valInt = valByte>>(8-(posBit+1)) & 0x0001;
+		return valInt;
 	}
 	public void putDataSection(byte[] b){
 		if(b.length > DATA_END - DATA_START){
