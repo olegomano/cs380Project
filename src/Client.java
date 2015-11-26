@@ -34,6 +34,7 @@ public class Client {
 			}
 		}
 		server.close();
+		file.close();
 	}
 	
 	private void onPacketRecieved(Packet p) throws IOException{
