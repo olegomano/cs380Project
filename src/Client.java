@@ -56,6 +56,7 @@ public class Client {
 		case Packet.TYPE_DATA_TRANSFER:
 			if(p.validateHash()){
 				file.write(p.getDataSection(),0,p.getSize());
+				file.flush();
 				Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
 				toServer.write(responce.getRawData());
 			}else{
@@ -68,9 +69,8 @@ public class Client {
 				System.out.println("Recieved file info from server");
 				byte[] fName = new byte[p.getSize()];
 				System.arraycopy(p.getDataSection(),0,fName,0,fName.length);
-				System.out.println("Creating new File " + Main.FILE_PATH + new String(fName));
-				downloadFile = new File(Main.FILE_PATH+"/"+new String(fName));
-				
+				System.out.println("Creating new File " + Main.FILE_PATH + "/"+new String(fName));
+				downloadFile = new File(Main.FILE_PATH+"/recieved"+new String(fName));
 				if(downloadFile.exists()){
 					downloadFile.delete();
 				}
@@ -84,6 +84,7 @@ public class Client {
 			toServer.write(res.getRawData());
 			break;
 		case Packet.TYPE_ERROR:	
+			System.out.println("There was an error");
 		case Packet.TYPE_CONNECTION_CLOSED:
 			System.out.println("Server closed connection!");
 			transfering = false;

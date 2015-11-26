@@ -18,19 +18,14 @@ public class Main {
 	private static String HASH_FAIL = "-h";
 	private static String COMMAND_LIST = "-help";
 	private static String PORT_NUMBER = "-p";
-	
-	private static String[] commandList = {
-		SERVER_MODE,
-		CLIENT_MODE,
-		ASCII_ARMOR,
-		HASH_FAIL,
-		COMMAND_LIST,
-	};
+	private static String SERVER_IP = "-i";
 	
 	public static boolean FAIL_HASH = false;
 	public static String FILE_PATH = "";	
 	public static byte[] KEY;
 	public static boolean ASCII_ARMORED = false;
+	
+	
 	
 	public static void main(String[] args) throws IOException {
 		Server.SERVER_PORT= getPortNumber(args);
@@ -39,14 +34,31 @@ public class Main {
 		FILE_PATH = getFilePath(args);
 		FAIL_HASH = isHashFailed(args);
 		
+		if(FILE_PATH == null){
+			System.out.println("ERROR no file specified");
+			return;
+		}
+		if(KEY == null){
+			System.out.println("ERROR no key specified");
+		}
+		
 		if(isClient(args)){
 			Client client = new Client();
-			client.connect("192.168.50.2");
+			client.connect(getServerIp(args));
 		}else{
 			Server server = new Server();
 			server.start();
 		}
 		
+	}
+	
+	public static String getServerIp(String[] arr){
+		for(int i = 0; i < arr.length; i++){
+			if(arr[i].compareTo(SERVER_IP) == 0){
+				return arr[i+1]; 
+			}
+		}
+		return "localhost";
 	}
 	
 	private static int getPortNumber(String[] arr){

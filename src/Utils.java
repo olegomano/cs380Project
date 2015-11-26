@@ -22,7 +22,7 @@ public class Utils {
 		 * separate bytes into 6 bit segments then translate to bytes again
 		 * return the new byte array created by this process
 		 */
-		System.out.println("Encode in length: " + in.length);
+		//System.out.println("Encode in length: " + in.length);
 		int mod = in.length % 3;
 		byte[] padded = null;
 		if(mod == 0){
@@ -31,7 +31,7 @@ public class Utils {
 		else{
 			padded = new byte[in.length + mod];
 		}
-		System.out.println("Padded length: " + padded.length);
+		//System.out.println("Padded length: " + padded.length);
 		System.arraycopy(in, 0, padded, 0, in.length);
 
 		byte[] out = new byte[(padded.length*4)/3];
@@ -40,7 +40,7 @@ public class Utils {
 		//System.out.println("out array length:"+out.length);
 		for(int i = 0;i < in.length;i += 3){
 			n = (padded[i] & 0xFC) >> 2;
-			System.out.println(n);
+			//System.out.println(n);
 			out[outCounter] = (byte) (n + 65);
 			n = (padded[i] & 0x03) << 4;
 			if(i+1<in.length){

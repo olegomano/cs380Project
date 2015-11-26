@@ -48,6 +48,8 @@ public class Server {
 				while(!requestUsername()){}
 				while(!requestPassword()){};
 				sendFile(Main.FILE_PATH);
+				toClient.close();
+				fromClient.close();
 				clientSocket.close();
 				mSocket.close();
 				
@@ -63,7 +65,7 @@ public class Server {
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
-			System.out.println("recieved packet from client " + fClient.toString());
+			//System.out.println("recieved packet from client " + fClient.toString());
 			byte[] usefullBits = new byte[fClient.getSize()];
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String usernameString = new String(usefullBits);
@@ -83,7 +85,7 @@ public class Server {
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
-			System.out.println("recieved packet from client " + fClient.toString());
+			//System.out.println("recieved packet from client " + fClient.toString());
 			
 			byte[] usefullBits = new byte[fClient.getSize()];
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
@@ -96,7 +98,6 @@ public class Server {
 			}
 			return false;
 		}
-		
 		private void sendFile(String path) throws IOException{
 			File toSend = new File(path);
 			if(!toSend.canRead() || !toSend.exists()){
@@ -116,8 +117,10 @@ public class Server {
 				clientSocket.close();
 				mSocket.close();
 			}
+			int frameNumber = 0;
 			int result = sendFileFrame(file);
 			while(result == SUCCESS){
+				System.out.println("Sending frame " + frameNumber++);
 				result = sendFileFrame(file);
 			}
 			if(result == FAILURE){
@@ -147,16 +150,18 @@ public class Server {
 			return false;
 		}
 		
+		private int frameNumber = 0;
 		private int sendFileFrame(InputStream f) throws IOException{
 			byte[] toSend = new byte[Packet.DATA_SECTION_MAX];
 			int read = f.read(toSend);
-			System.out.println("Server Read: " + read + " bytes");
+			//System.out.println("Server Read: " + read + " bytes");
 			if(read == -1){
 				return COMPLETE;
 			}
 			
 			Packet fileFrame = new Packet(Packet.TYPE_DATA_TRANSFER);
 			fileFrame.putDataSection(toSend,read);
+			System.out.println(fileFrame.toString());
 			toClient.write(fileFrame.getRawData());
 			
 			int retryCount = 0;
