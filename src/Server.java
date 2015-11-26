@@ -49,9 +49,10 @@ public class Server {
 				while(!requestPassword()){};
 				sendFile(Main.FILE_PATH);
 				Thread.sleep(1000);
+				toClient.close();
+				fromClient.close();
 				clientSocket.close();
 				mSocket.close();
-				
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
