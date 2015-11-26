@@ -48,6 +48,7 @@ public class Server {
 				while(!requestUsername()){}
 				while(!requestPassword()){};
 				sendFile(Main.FILE_PATH);
+				Thread.sleep(1000);
 				clientSocket.close();
 				mSocket.close();
 				
