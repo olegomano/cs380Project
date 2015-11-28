@@ -67,6 +67,7 @@ public class Server {
 			Packet fClient = new Packet(recievedPacket);
 			//System.out.println("recieved packet from client " + fClient.toString());
 			byte[] usefullBits = new byte[fClient.getSize()];
+			System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String usernameString = new String(usefullBits);
 			System.out.println("Recived Username From client: " + usernameString);
@@ -88,6 +89,7 @@ public class Server {
 			//System.out.println("recieved packet from client " + fClient.toString());
 			
 			byte[] usefullBits = new byte[fClient.getSize()];
+			System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String passwordString = new String(usefullBits);
 			System.out.println("Recived Password From client: " + passwordString);

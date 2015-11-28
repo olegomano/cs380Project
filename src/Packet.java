@@ -98,7 +98,7 @@ public class Packet {
 			bb.putDouble(HASH_START, hash);
 			byte[] asciiArmored;
 			if(Main.ASCII_ARMORED){
-				asciiArmored = Utils.encodeBase64(padded);
+				asciiArmored = Utils.encode(padded);
 				System.out.println("Size after encoding: " + asciiArmored.length);
 			}else{
 				asciiArmored = new byte[DATA_END - DATA_START];
@@ -126,6 +126,7 @@ public class Packet {
 		if(Main.FAIL_HASH){
 			return false;
 		}
+		System.out.println("getData called from validateHash");
 		byte[] data = getDataSection();
 		double dataHash = getHash(data);
 		double hashFromPacket = bb.getDouble(HASH_START);
@@ -151,8 +152,12 @@ public class Packet {
 		byte[] unencrypted = Utils.decrypt(b,Main.KEY);
 		System.out.println("Size after unencryption " + unencrypted.length);
 		if(Main.ASCII_ARMORED){
-			byte[] decoded = Utils.decodeBase64(unencrypted);
+			byte[] decoded = Utils.decode(unencrypted);
 			System.out.println("Size after decoding: " + decoded.length);
+			System.out.println("GETDATA CALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLED");
+			for(int i=0; i<b.length;i++){
+				System.out.println(b[i]);
+			}
 			return decoded;
 		}
 		byte[] paddedBack = new byte[DATA_SECTION_MAX];

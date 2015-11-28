@@ -56,6 +56,7 @@ public class Client {
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
 			if(p.validateHash()){
+				System.out.println("getDataSection called from Client");
 				file.write(p.getDataSection(),0,p.getSize());
 				file.flush();
 				Packet responce = new Packet(Packet.TYPE_DATA_ACKNOWLEDGE);
@@ -69,6 +70,7 @@ public class Client {
 			if(!fileCreated){
 				System.out.println("Recieved file info from server");
 				byte[] fName = new byte[p.getSize()];
+				System.out.println("getDataSection called from Client");
 				System.arraycopy(p.getDataSection(),0,fName,0,fName.length);
 				System.out.println("Creating new File " + Main.FILE_PATH + "/"+new String(fName));
 				downloadFile = new File(Main.FILE_PATH+"/recieved"+new String(fName));
