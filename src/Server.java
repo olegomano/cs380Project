@@ -1,5 +1,9 @@
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,14 +11,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Hashtable;
 
 
 public class Server {
 	public static int SERVER_PORT = 10114;
 	private ServerThread server;
 	
-	private final static String username = "oleg";  //TODO: read this dynamicall from file
-	private final static String password = "tolstov";
+	private volatile HashMap<String,String> useNameList = new HashMap();
 	
 	private final static int SUCCESS =  0;
 	private final static int FAILURE = -1;
@@ -23,12 +28,19 @@ public class Server {
 	
 	
 	public void start() throws IOException{
+		loadPasswordList();
 		server = new ServerThread();
 		server.start();
 	}
 	
-	public void sendPacket(){
-		
+	private void loadPasswordList() throws IOException{
+		BufferedReader in = new BufferedReader(new FileReader((new File("PasswordList.txt"))));
+		String line = in.readLine();
+		while(line!=null){
+			String[] split = line.split(",");
+			useNameList.put(split[0], split[1]);
+			line = in.readLine();
+		}	
 	}
 	
 	private class ServerThread extends Thread{
@@ -58,7 +70,7 @@ public class Server {
 				return;
 			}
 		}
-		
+		private String useName = "";
 		private boolean requestUsername() throws IOException, InterruptedException{
 			Packet p = new Packet(Packet.TYPE_USNAME_REQUEST);
 			toClient.write(p.getRawData());		
@@ -71,12 +83,11 @@ public class Server {
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String usernameString = new String(usefullBits);
 			System.out.println("Recived Username From client: " + usernameString);
-			
-			int comparison = usernameString.compareToIgnoreCase(Server.username); 
-			if( comparison == 0){
-				return true;
+			useName = usernameString;
+			if(useNameList.get(usernameString) ==null){
+				return false;
 			}
-			return false;
+			return true;
 			
 		}
 		
@@ -86,19 +97,16 @@ public class Server {
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
-			//System.out.println("recieved packet from client " + fClient.toString());
-			
 			byte[] usefullBits = new byte[fClient.getSize()];
 			System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String passwordString = new String(usefullBits);
 			System.out.println("Recived Password From client: " + passwordString);
-			
-			int comparison = passwordString.compareToIgnoreCase(Server.password); 
-			if( comparison == 0){
+			if(useNameList.get(useName).compareTo(passwordString) == 0){
 				return true;
 			}
 			return false;
+		
 		}
 		private void sendFile(String path) throws IOException{
 			File toSend = new File(path);
