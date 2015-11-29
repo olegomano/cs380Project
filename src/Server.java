@@ -58,7 +58,9 @@ public class Server {
 				toClient = clientSocket.getOutputStream();
 				fromClient = clientSocket.getInputStream();
 				while(!requestUsername()){}
+				System.gc();
 				while(!requestPassword()){};
+				System.gc();
 				sendFile(Main.FILE_PATH);
 				Thread.sleep(1000);
 				toClient.close();
@@ -77,7 +79,7 @@ public class Server {
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
-			//System.out.println("recieved packet from client " + fClient.toString());
+			System.out.println("recieved packet from client " + fClient.toString());
 			byte[] usefullBits = new byte[fClient.getSize()];
 			//System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
@@ -97,6 +99,8 @@ public class Server {
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			while(fromClient.read(recievedPacket)==-1){};//wait for responce
 			Packet fClient = new Packet(recievedPacket);
+			System.out.println("Recieved packet: " + fClient.toString());
+			System.out.println("Allocating " + fClient.getSize());
 			byte[] usefullBits = new byte[fClient.getSize()];
 			//System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
@@ -122,6 +126,7 @@ public class Server {
 				infoRetryCount++;
 				System.out.println("ERROR: failed sending file info, Retrying");
 			}
+			System.gc();
 			if(infoRetryCount==3){
 				System.out.println("Failed sending file info, aborting connection");
 				clientSocket.close();
@@ -132,6 +137,7 @@ public class Server {
 			while(result == SUCCESS){
 				System.out.println("Sending frame " + frameNumber++);
 				result = sendFileFrame(file);
+				System.gc();
 			}
 			if(result == FAILURE){
 				Packet fail = new Packet(Packet.TYPE_CONNECTION_CLOSED);

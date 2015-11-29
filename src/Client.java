@@ -46,13 +46,16 @@ public class Client {
 			Packet usnamePacket = new Packet(Packet.TYPE_DATA_TRANSFER);
 			usnamePacket.putDataSection(usname.getBytes(),usname.getBytes().length);
 			toServer.write(usnamePacket.getRawData());
+			toServer.flush();
 			break;
 		case Packet.TYPE_PASSWORD_REQUEST:
 			System.out.println("Enter password: ");
 			String password = keyboard.nextLine();
 			Packet passPacket = new Packet(Packet.TYPE_DATA_TRANSFER);
 			passPacket.putDataSection(password.getBytes(),password.getBytes().length);
+			System.out.println("Sending password Packet: " + passPacket.toString());
 			toServer.write(passPacket.getRawData());
+			toServer.flush();
 			break;
 		case Packet.TYPE_DATA_TRANSFER:
 			if(p.validateHash()){
