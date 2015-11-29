@@ -1,21 +1,5 @@
-import java.util.Arrays;
-
-
-
-
-//import IllegalArgumentException;
-//import String;
-import java.util.*;
 
 public class Utils {
-	/*
-	public static void main(String[] args){
-		byte[] tempArray = {'A', 0x11, 'A', 61, 'A', 'A', 'A'};
-		byte[] tempKey = {28, 24, 21, 22, 64};
-		System.out.println(new String(tempArray));
-		System.out.println(new String(decode(encode(tempArray))));
-	}
-	*/
 	private static final char[] toBase64 = {
 		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -37,16 +21,17 @@ public class Utils {
               int n = srclen % 3;
               len = 4 * (srclen / 3) + (n == 0 ? 0 : n + 1);
           }
-          if (linemax > 0)                                  // line separators
-              len += (len - 1) / linemax * newline.length;
           return len;
       }
 	  public static byte[] encode(byte[] src) {
           int len = outLength(src.length);          // dst array size
           byte[] dst = new byte[len];
           int ret = encode0(src, 0, src.length, dst);
-          if (ret != dst.length)
-               return Arrays.copyOf(dst, ret);
+          if (ret != dst.length){
+        	  byte[] temp = new byte[ret];
+        	  System.arraycopy(temp, 0, dst, 0, ret);
+              return temp;
+          }
           return dst;
       }
 	  private static int encode0(byte[] src, int off, int end, byte[] dst) {
@@ -55,8 +40,6 @@ public class Utils {
           int sp = off;
           int slen = (end - off) / 3 * 3;
           int sl = off + slen;
-          if (linemax > 0 && slen  > linemax / 4 * 3)
-              slen = linemax / 4 * 3;
           int dp = 0;
           while (sp < sl) {
               int sl0 = Math.min(sp + slen, sl);
@@ -138,7 +121,9 @@ public class Utils {
       }
 	  private static final int[] fromBase64 = new int[256];
       static {
-          Arrays.fill(fromBase64, -1);
+          for(int i = 0;i<fromBase64.length; i++){
+        	  fromBase64[i] = -1;
+          }
           for (int i = 0; i < toBase64.length; i++)
               fromBase64[toBase64[i]] = i;
           fromBase64['='] = -2;
@@ -152,12 +137,7 @@ public class Utils {
         while (sp < sl) {
             int b = src[sp++] & 0xff;
             if ((b = base64[b]) < 0) {
-                if (b == -2) {         // padding byte '='
-                    // =     shiftto==18 unnecessary padding
-                    // x=    shiftto==12 a dangling single x
-                    // x     to be handled together with non-padding case
-                    // xx=   shiftto==6&&sp==sl missing last =
-                    // xx=y  shiftto==6 last is not =
+                if (b == -2) {         
                     if (shiftto == 6 && (sp == sl || src[sp++] != '=') ||
                         shiftto == 18) {
                         throw new IllegalArgumentException(
@@ -193,14 +173,6 @@ public class Utils {
             throw new IllegalArgumentException(
                 "Last unit does not have enough valid bits");
         }
-        // anything left is invalid, if is not MIME.
-        // if MIME, ignore all non-base64 character
-        while (sp < sl) {
-            if (isMIME && base64[src[sp++]] < 0)
-                continue;
-            throw new IllegalArgumentException(
-                "Input byte array has incorrect ending byte at " + sp);
-        }
         return dp;
     }
 
@@ -208,7 +180,9 @@ public class Utils {
         byte[] dst = new byte[outLength(src, 0, src.length)];
         int ret = decode0(src, 0, src.length, dst);
         if (ret != dst.length) {
-            dst = Arrays.copyOf(dst, ret);
+        	byte[] temp = new byte[ret];
+      	  System.arraycopy(temp, 0, dst, 0, ret);
+            return temp;
         }
         return dst;
     }
