@@ -82,13 +82,7 @@ public class Server {
 			
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 			fromClient.readFully(recievedPacket);
-			Packet fClient = new Packet(recievedPacket);
-			
-			if(!fClient.validateHash()){
-				System.out.println("Failed validating usename hash");
-				return false;
-			}
-			
+			Packet fClient = new Packet(recievedPacket);	
 			System.out.println("recieved packet from client " + fClient.toString());
 			byte[] usefullBits = new byte[fClient.getSize()];
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
@@ -111,11 +105,6 @@ public class Server {
 			fromClient.readFully(recievedPacket);
 			
 			Packet fClient = new Packet(recievedPacket);
-			if(!fClient.validateHash()){
-				System.out.println("Failed validating password hash");
-				return false;
-			}
-		
 			System.out.println("Recieved packet: " + fClient.toString());
 			System.out.println("Allocating " + fClient.getSize());
 			byte[] usefullBits = new byte[fClient.getSize()];
