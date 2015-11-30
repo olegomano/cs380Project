@@ -201,7 +201,7 @@ public class Server {
 			System.out.println(fileFrame.toString());
 			toClient.write(fileFrame.getRawData());
 			toClient.flush();
-			Thread.sleep(300);
+			//Thread.sleep(300);
 			int retryCount = 0;
 			byte[] responce = new byte[Packet.PACKET_SIZE];
 			while(retryCount < 3){
@@ -214,7 +214,7 @@ public class Server {
 				System.out.println("RESENDING PACKET, ATTEMPT " + retryCount);
 				toClient.write(fileFrame.getRawData());
 				toClient.flush();
-				Thread.sleep(300);
+				//Thread.sleep(300);
 			}
 			return FAILURE;
 		}
