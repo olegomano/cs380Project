@@ -1,3 +1,4 @@
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.util.Scanner;
 public class Client {
 	private Socket server;
 	private OutputStream toServer;
-	private InputStream fromServer;
+	private DataInputStream fromServer;
 	private OutputStream file;
 	private Scanner keyboard = new Scanner(System.in);
 	
@@ -24,14 +25,13 @@ public class Client {
 	public void connect(String hostname) throws UnknownHostException, IOException{
 		server = new Socket(hostname,Server.SERVER_PORT);
 		toServer = server.getOutputStream();
-		fromServer = server.getInputStream();
+		fromServer = new DataInputStream(server.getInputStream());
 		byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
 		while(transfering){
-			int read = fromServer.read(recievedPacket);
-			if(read != -1){
-				System.out.println("Read data size: " + read + " expected size " + Packet.PACKET_SIZE);
-				onPacketRecieved(new Packet(recievedPacket));
-			}
+			fromServer.readFully(recievedPacket);
+			System.out.println("Read data size: " + " expected size " + Packet.PACKET_SIZE);
+			onPacketRecieved(new Packet(recievedPacket));
+			
 		}
 		server.close();
 		file.close();

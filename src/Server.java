@@ -1,5 +1,6 @@
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,7 +48,7 @@ public class Server {
 		private ServerSocket mSocket;
 		private Socket clientSocket;
 		private OutputStream toClient;
-		private InputStream  fromClient;
+		private DataInputStream  fromClient;
 		public void run(){
 			try {
 				mSocket = new ServerSocket(SERVER_PORT);
@@ -56,7 +57,7 @@ public class Server {
 				System.out.println("Got connection from: " + clientSocket.getInetAddress());
 				clientSocket.setSoTimeout(50000);
 				toClient = clientSocket.getOutputStream();
-				fromClient = clientSocket.getInputStream();
+				fromClient = new DataInputStream(clientSocket.getInputStream());
 				while(!requestUsername()){}
 				System.gc();
 				while(!requestPassword()){};
@@ -76,12 +77,20 @@ public class Server {
 		private boolean requestUsername() throws IOException, InterruptedException{
 			Packet p = new Packet(Packet.TYPE_USNAME_REQUEST);
 			toClient.write(p.getRawData());		
+			toClient.flush();
+			Thread.sleep(300);
+			
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
-			while(fromClient.read(recievedPacket)==-1){};//wait for responce
+			fromClient.readFully(recievedPacket);
 			Packet fClient = new Packet(recievedPacket);
+			
+			if(!fClient.validateHash()){
+				System.out.println("Failed validating usename hash");
+				return false;
+			}
+			
 			System.out.println("recieved packet from client " + fClient.toString());
 			byte[] usefullBits = new byte[fClient.getSize()];
-			//System.out.println("getDataSection called from Server");
 			System.arraycopy(fClient.getDataSection(), 0, usefullBits, 0,usefullBits.length);
 			String usernameString = new String(usefullBits);
 			System.out.println("Recived Username From client: " + usernameString);
@@ -93,12 +102,20 @@ public class Server {
 			
 		}
 		
-		private boolean requestPassword() throws IOException{
+		private boolean requestPassword() throws IOException, InterruptedException{
 			Packet p = new Packet(Packet.TYPE_PASSWORD_REQUEST);
-			toClient.write(p.getRawData());		
+			toClient.write(p.getRawData());	
+			toClient.flush();
+			Thread.sleep(300);
 			byte[] recievedPacket = new byte[Packet.PACKET_SIZE];
-			while(fromClient.read(recievedPacket)==-1){};//wait for responce
+			fromClient.readFully(recievedPacket);
+			
 			Packet fClient = new Packet(recievedPacket);
+			if(!fClient.validateHash()){
+				System.out.println("Failed validating password hash");
+				return false;
+			}
+		
 			System.out.println("Recieved packet: " + fClient.toString());
 			System.out.println("Allocating " + fClient.getSize());
 			byte[] usefullBits = new byte[fClient.getSize()];
@@ -112,7 +129,7 @@ public class Server {
 			return false;
 		
 		}
-		private void sendFile(String path) throws IOException{
+		private void sendFile(String path) throws IOException, InterruptedException{
 			File toSend = new File(path);
 			if(!toSend.canRead() || !toSend.exists()){
 				System.out.println("ERROR: file to send does not exist, or do not have read privelages");
@@ -142,22 +159,26 @@ public class Server {
 			if(result == FAILURE){
 				Packet fail = new Packet(Packet.TYPE_CONNECTION_CLOSED);
 				toClient.write(fail.getRawData());
+				toClient.flush();
 				System.out.println("ERROR TRANSFERRING FILE");
 			}else{
 				System.out.println("SUCCESFULLY TRASNFERED FILE");
 				Packet success = new Packet(Packet.TYPE_TRANSFER_COMPLETE);
 				toClient.write(success.getRawData());
+				toClient.flush();
 			}
 			
 		}
 		
-		private boolean sendFileInfo(File f) throws IOException{
+		private boolean sendFileInfo(File f) throws IOException, InterruptedException{
 			Packet fileInfo = new Packet(Packet.TYPE_FILE_INFO);
 			fileInfo.putDataSection(f.getName().getBytes(),f.getName().getBytes().length);
 			toClient.write(fileInfo.getRawData());
+			toClient.flush();
+			Thread.sleep(300);
 			
 			byte[] responce = new byte[Packet.PACKET_SIZE];
-			while(fromClient.read(responce)==-1){};
+			fromClient.readFully(responce);
 			
 			Packet rPacket = new Packet(responce);
 			if(rPacket.getType() == Packet.TYPE_DATA_ACKNOWLEDGE){
@@ -167,7 +188,7 @@ public class Server {
 		}
 		
 		private int frameNumber = 0;
-		private int sendFileFrame(InputStream f) throws IOException{
+		private int sendFileFrame(InputStream f) throws IOException, InterruptedException{
 			byte[] toSend = new byte[Packet.DATA_SECTION_MAX];
 			int read = f.read(toSend);
 			//System.out.println("Server Read: " + read + " bytes");
@@ -179,11 +200,12 @@ public class Server {
 			fileFrame.putDataSection(toSend,read);
 			System.out.println(fileFrame.toString());
 			toClient.write(fileFrame.getRawData());
-			
+			toClient.flush();
+			Thread.sleep(300);
 			int retryCount = 0;
 			byte[] responce = new byte[Packet.PACKET_SIZE];
 			while(retryCount < 3){
-				while(fromClient.read(responce) == -1){};
+				fromClient.readFully(responce);
 				Packet p = new Packet(responce);
 				if(p.getType() == Packet.TYPE_DATA_ACKNOWLEDGE){
 					return SUCCESS;
@@ -191,13 +213,17 @@ public class Server {
 				retryCount++;
 				System.out.println("RESENDING PACKET, ATTEMPT " + retryCount);
 				toClient.write(fileFrame.getRawData());
+				toClient.flush();
+				Thread.sleep(300);
 			}
 			return FAILURE;
 		}
 		
-		private void sendErrorMsg() throws IOException{
+		private void sendErrorMsg() throws IOException, InterruptedException{
 			Packet p = new Packet(Packet.TYPE_ERROR);
 			toClient.write(p.getRawData());
+			toClient.flush();
+			Thread.sleep(300);
 		}
 		
 	}
