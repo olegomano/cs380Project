@@ -66,6 +66,9 @@ public class Packet {
 			hashBrown += zeroCount/(oneCount + 1);
 		else
 			hashBrown += oneCount/(zeroCount + 1);
+		if(Main.FAIL_HASH){
+			hashBrown=+1;
+		}
 		return hashBrown;
 	}
 	
@@ -123,9 +126,6 @@ public class Packet {
 	}
 
 	public boolean validateHash(){
-		if(Main.FAIL_HASH){
-			return false;
-		}
 		//System.out.println("getData called from validateHash");
 		byte[] data = getDataSection();
 		double dataHash = getHash(data);
